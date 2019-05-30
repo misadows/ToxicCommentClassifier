@@ -39,7 +39,7 @@ class BERTFacade:
             num_train_steps=num_train_steps,
             num_warmup_steps=num_warmup_steps,
             num_labels=num_labels,
-            use_tpu=True,
+            use_tpu=False,
             use_one_hot_embeddings=False
         )
 
@@ -49,7 +49,7 @@ class BERTFacade:
             self,
             bert_config,
             model_config: ModelConfig,
-            init_checkpoint,
+            init_checkpoint=None,
     ):
         def model_fn(features, labels, mode, params):  # pylint: disable=unused-argument
             """The `model_fn` for TPUEstimator."""
@@ -65,20 +65,23 @@ class BERTFacade:
                 num_labels, use_one_hot_embeddings
             )
 
-            scaffold_fn = TPUScaffoldFactory().create_scaffold_fn(init_checkpoint)
-            estimator_spec_factory = TPUEstimatorSpecAbstractFactory(model_config).create(mode)
+            tvars = tf.trainable_variables()
+            assignment_map, _ = modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
+            tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
 
-            return estimator_spec_factory.create(model_nodes, features, scaffold_fn)
+            estimator_spec_factory = EstimatorSpecAbstractFactory(model_config).create(mode)
+
+            return estimator_spec_factory.create(model_nodes, features)
 
         return model_fn
 
 
-class TPUEstimatorTrainSpecFactory:
+class EstimatorTrainSpecFactory:
 
     def __init__(self, model_config: ModelConfig):
         self._model_config = model_config
 
-    def create(self, model_nodes, features, scaffold_fn):
+    def create(self, model_nodes, features):
         total_loss, _, _, _ = model_nodes
 
         train_op = optimization.create_optimizer(
@@ -89,20 +92,19 @@ class TPUEstimatorTrainSpecFactory:
             self._model_config.use_tpu,
         )
 
-        return tf.contrib.tpu.TPUEstimatorSpec(
+        return tf.estimator.EstimatorSpec(
             mode=tf.estimator.ModeKeys.TRAIN,
             loss=total_loss,
             train_op=train_op,
-            scaffold_fn=scaffold_fn
         )
 
 
-class TPUEstimatorEvalSpecFactory:
+class EstimatorEvalSpecFactory:
 
     def __init__(self, model_config: ModelConfig):
         self._model_config = model_config
 
-    def create(self, model_nodes, features, scaffold_fn):
+    def create(self, model_nodes, features):
         total_loss, per_example_loss, _, probabilities = model_nodes
 
         def metric_fn(per_example_loss, label_ids, probabilities):
@@ -121,55 +123,37 @@ class TPUEstimatorEvalSpecFactory:
         label_ids = features['label_ids']
         eval_metrics = (metric_fn, [per_example_loss, label_ids, probabilities])
 
-        return tf.contrib.tpu.TPUEstimatorSpec(
+        return tf.estimator.EstimatorSpec(
             mode=tf.estimator.ModeKeys.EVAL,
             loss=total_loss,
             eval_metrics=eval_metrics,
-            scaffold_fn=scaffold_fn
         )
 
 
-class TPUEstimatorDefaultSpecFactory:
+class EstimatorDefaultSpecFactory:
 
     def __init__(self, mode):
         self.mode = mode
 
-    def create(self, model_nodes, features, scaffold_fn):
+    def create(self, model_nodes, features):
         _, _, _, probabilities = model_nodes
 
-        return tf.contrib.tpu.TPUEstimatorSpec(
+        return tf.estimator.EstimatorSpec(
             mode=self.mode,
             predictions={"probabilities": probabilities},
-            scaffold_fn=scaffold_fn
         )
 
 
-class TPUEstimatorSpecAbstractFactory:
+class EstimatorSpecAbstractFactory:
 
     def __init__(self, model_config: ModelConfig):
         self._model_config = model_config
 
     def create(self, mode):
         if mode == tf.estimator.ModeKeys.TRAIN:
-            return TPUEstimatorTrainSpecFactory(self._model_config)
+            return EstimatorTrainSpecFactory(self._model_config)
 
         if mode == tf.estimator.ModeKeys.EVAL:
-            return TPUEstimatorEvalSpecFactory(self._model_config)
+            return EstimatorEvalSpecFactory(self._model_config)
 
-        return TPUEstimatorDefaultSpecFactory(mode)
-
-
-class TPUScaffoldFactory:
-
-    def create_scaffold_fn(self, init_checkpoint=None):
-        if not init_checkpoint:
-            return None
-
-        tvars = tf.trainable_variables()
-        assignment_map, _ = modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
-
-        def tpu_scaffold():
-            tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
-            return tf.train.Scaffold()
-
-        return tpu_scaffold
+        return EstimatorDefaultSpecFactory(mode)

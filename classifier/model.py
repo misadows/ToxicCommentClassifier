@@ -46,5 +46,6 @@ def create_model(
         labels = tf.cast(labels, tf.float32)
         per_example_loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=logits)
         loss = tf.reduce_mean(per_example_loss)
+        tf.summary.scalar('loss', loss)
 
         return loss, per_example_loss, logits, probabilities

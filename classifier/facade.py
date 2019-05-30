@@ -27,10 +27,9 @@ class BERTFacade:
         config_file = os.path.join(BERT_PRETRAINED_DIR, 'bert_config.json')
         return modeling.BertConfig.from_json_file(config_file)
 
-    def build_model_fn(self, num_train_examples, num_labels, init_checkpoint=BERT_INIT_CHECKPOINT):
+    def build_model_fn(self, num_labels, num_train_steps, init_checkpoint=BERT_INIT_CHECKPOINT):
         bert_config = self.get_config()
 
-        num_train_steps = int(num_train_examples / TRAIN_BATCH_SIZE * NUM_TRAIN_EPOCHS)
         num_warmup_steps = int(num_train_steps * WARMUP_PROPORTION)
 
         model_config = ModelConfig(

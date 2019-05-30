@@ -1,22 +1,24 @@
+import datetime
+
 import tensorflow as tf
 
-from classifier.constants import TRAIN_BATCH_SIZE, SAVE_CHECKPOINTS_STEPS, BERT_INIT_CHECKPOINT
-from classifier.dataset import ToxicCommentsProcessor
+from classifier.bert import run_classifier_with_tfhub
+from classifier.constants import TRAIN_BATCH_SIZE, SAVE_CHECKPOINTS_STEPS, BERT_INIT_CHECKPOINT, MAX_SEQ_LENGTH, \
+    BERT_MODEL_HUB, NUM_TRAIN_EPOCHS
+from classifier.dataset import ToxicCommentsProcessor, convert_examples_to_features, input_fn_builder
 from classifier.facade import BERTFacade
 
 
 def get_toxic_comments_estimator(
-        task_data_dir,
+        num_train_examples,
         output_dir,
         init_checkpoint=BERT_INIT_CHECKPOINT
 ):
-    processor = ToxicCommentsProcessor()
-
-    train_examples = processor.get_train_examples(task_data_dir)
-    labels = processor.get_labels()
+    labels = ToxicCommentsProcessor().get_labels()
+    num_train_steps = int(num_train_examples / TRAIN_BATCH_SIZE * NUM_TRAIN_EPOCHS)
 
     model_fn = BERTFacade().build_model_fn(
-        len(train_examples), len(labels), init_checkpoint
+        len(labels), num_train_steps, init_checkpoint
     )
 
     return tf.estimator.Estimator(
@@ -27,3 +29,31 @@ def get_toxic_comments_estimator(
         ),
         params={"batch_size": TRAIN_BATCH_SIZE},
     )
+
+
+def model_train(estimator, train_examples):
+    print('Creating tokenizer from tf hub')
+
+    tokenizer = run_classifier_with_tfhub.create_tokenizer_from_hub_module(BERT_MODEL_HUB)
+
+    print('Converting examples to features...')
+
+    train_features = convert_examples_to_features(train_examples, MAX_SEQ_LENGTH, tokenizer)
+
+    num_train_examples = len(train_examples)
+    num_train_steps = int(num_train_examples / TRAIN_BATCH_SIZE * NUM_TRAIN_EPOCHS)
+
+    print('***** Started training at {} *****'.format(datetime.datetime.now()))
+    print(f' Num train examples = {num_train_examples}')
+    print(f' Batch size = {TRAIN_BATCH_SIZE}')
+    tf.logging.info("  Num steps = %d", num_train_steps)
+
+    train_input_fn = input_fn_builder(
+        features=train_features,
+        seq_length=MAX_SEQ_LENGTH,
+        is_training=True,
+        drop_remainder=True
+    )
+
+    estimator.train(input_fn=train_input_fn, max_steps=num_train_steps)
+    print('***** Finished training at {} *****'.format(datetime.datetime.now()))

@@ -22,6 +22,6 @@ BERT_MODEL = 'uncased_L-12_H-768_A-12'
 BERT_MODEL_HUB = f'https://tfhub.dev/google/bert_{BERT_MODEL}/1'
 
 BERT_PRETRAINED_DIR = f'gs://cloud-tpu-checkpoints/bert/{BERT_MODEL}'
+BERT_INIT_CHECKPOINT = os.path.join(BERT_PRETRAINED_DIR, 'bert_model.ckpt')
 CONFIG_FILE = os.path.join(BERT_PRETRAINED_DIR, 'bert_config.json')
-# INIT_CHECKPOINT = os.path.join(BERT_PRETRAINED_DIR, 'bert_model.ckpt')
 

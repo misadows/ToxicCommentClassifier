@@ -6,8 +6,8 @@ import tensorflow as tf
 from .bert import modeling, optimization
 from .constants import (
     BERT_PRETRAINED_DIR, OUTPUT_DIR, LEARNING_RATE, TRAIN_BATCH_SIZE, NUM_TRAIN_EPOCHS,
-    WARMUP_PROPORTION
-)
+    WARMUP_PROPORTION,
+    BERT_INIT_CHECKPOINT)
 from .model import create_model
 
 
@@ -27,9 +27,8 @@ class BERTFacade:
         config_file = os.path.join(BERT_PRETRAINED_DIR, 'bert_config.json')
         return modeling.BertConfig.from_json_file(config_file)
 
-    def build_model_fn(self, num_train_examples, num_labels):
+    def build_model_fn(self, num_train_examples, num_labels, init_checkpoint=BERT_INIT_CHECKPOINT):
         bert_config = self.get_config()
-        init_checkpoint = tf.train.latest_checkpoint(OUTPUT_DIR, latest_filename=None)
 
         num_train_steps = int(num_train_examples / TRAIN_BATCH_SIZE * NUM_TRAIN_EPOCHS)
         num_warmup_steps = int(num_train_steps * WARMUP_PROPORTION)

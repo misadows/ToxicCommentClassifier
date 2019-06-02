@@ -136,14 +136,14 @@ def serving_input_receiver_fn():
     features = {
         'input_ids': input_ids,
         'input_mask': input_mask,
-        'segment_ids': segment_ids
+        'segment_ids': segment_ids,
+        'label_ids': tf.zeros([1, len(ToxicCommentsProcessor().get_labels())], dtype=tf.int32)
     }
 
     received_tensors = {
         'input_ids': input_ids,
         'input_mask': input_mask,
         'segment_ids': segment_ids,
-        'label_ids': tf.zeros([1, len(ToxicCommentsProcessor().get_labels())], dtype=tf.int32)
     }
 
     return tf.estimator.export.ServingInputReceiver(features, received_tensors)

@@ -15,6 +15,8 @@ SAVE_SUMMARY_STEPS = 500
 NUM_TPU_CORES = 8
 ITERATIONS_PER_LOOP = 1000
 
+ACCURACY_THRESHOLD = 0.5
+
 BUCKET = 'smucha_colab'
 OUTPUT_DIR = f'gs://{BUCKET}/bert-tfhub/models/'
 

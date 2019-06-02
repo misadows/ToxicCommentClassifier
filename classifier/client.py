@@ -13,7 +13,7 @@ dev_features = convert_examples_to_features(dev_examples, MAX_SEQ_LENGTH, tokeni
 
 example = dev_features[0]
 data = {
-    'examples': [
+    'instances': [
         {
             'input_ids': example.input_ids,
             'input_mask': example.input_mask,

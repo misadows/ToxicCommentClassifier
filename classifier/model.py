@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+from classifier.constants import ACCURACY_THRESHOLD
 from .bert import modeling
 
 
@@ -47,5 +48,16 @@ def create_model(
         per_example_loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=logits)
         loss = tf.reduce_mean(per_example_loss)
         tf.summary.scalar('loss', loss)
+
+        logits_split = tf.split(probabilities, num_labels, axis=-1)
+        label_ids_split = tf.split(labels, num_labels, axis=-1)
+        for j, logits in enumerate(logits_split):
+            label_id_ = tf.cast(label_ids_split[j], dtype=tf.int32)
+            current_auc, update_op_auc = tf.metrics.auc(label_id_, logits)
+            accuracy = tf.where(logits_split > ACCURACY_THRESHOLD,
+                                tf.ones_like(logits_split, dtype=tf.int32),
+                                tf.zeros_like(logits_split, dtype=tf.int32))
+            tf.summary.scalar('auc_{}'.format(j), current_auc)
+            tf.summary.scalar('accuracy_{}'.format(j), accuracy)
 
         return loss, per_example_loss, logits, probabilities

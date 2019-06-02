@@ -4,8 +4,9 @@ import tensorflow as tf
 
 from classifier.bert import run_classifier_with_tfhub
 from classifier.constants import TRAIN_BATCH_SIZE, SAVE_CHECKPOINTS_STEPS, BERT_INIT_CHECKPOINT, MAX_SEQ_LENGTH, \
-    BERT_MODEL_HUB, NUM_TRAIN_EPOCHS
-from classifier.dataset import ToxicCommentsProcessor, convert_examples_to_features, input_fn_builder
+    BERT_MODEL_HUB, NUM_TRAIN_EPOCHS, CHECKPOINT_DIR, BASE_DIR, EXPORT_DIR
+from classifier.dataset import ToxicCommentsProcessor, convert_examples_to_features, input_fn_builder, \
+    serving_input_receiver_fn
 from classifier.facade import BERTFacade
 
 
@@ -57,3 +58,10 @@ def model_train(estimator, train_examples):
 
     estimator.train(input_fn=train_input_fn, max_steps=num_train_steps)
     print('***** Finished training at {} *****'.format(datetime.datetime.now()))
+
+
+def model_export():
+    processor = ToxicCommentsProcessor()
+    train_examples = processor.get_train_examples(BASE_DIR)
+    estimator = get_toxic_comments_estimator(len(train_examples), CHECKPOINT_DIR)
+    estimator.export_saved_model(EXPORT_DIR, serving_input_receiver_fn=serving_input_receiver_fn)

@@ -25,3 +25,6 @@ BERT_PRETRAINED_DIR = f'gs://cloud-tpu-checkpoints/bert/{BERT_MODEL}'
 BERT_INIT_CHECKPOINT = os.path.join(BERT_PRETRAINED_DIR, 'bert_model.ckpt')
 CONFIG_FILE = os.path.join(BERT_PRETRAINED_DIR, 'bert_config.json')
 
+BASE_DIR = './'
+CHECKPOINT_DIR = './output'
+EXPORT_DIR = './exported'

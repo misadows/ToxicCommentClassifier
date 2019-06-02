@@ -11,12 +11,11 @@ from classifier.dataset import convert_examples_to_features, InputExample
 MODEL_URL = 'http://34.65.73.45:8501/v1/models/saved_model_basic:predict'
 
 app = Flask(__name__)
+tokenizer = run_classifier_with_tfhub.create_tokenizer_from_hub_module(BERT_MODEL_HUB)
 
 
 def preprocess_text_instances(instances):
     examples = [InputExample(i, inst["text"], [0, 0, 0, 0, 0, 0]) for i, inst in enumerate(instances)]
-
-    tokenizer = run_classifier_with_tfhub.create_tokenizer_from_hub_module(BERT_MODEL_HUB)
     features = convert_examples_to_features(examples, MAX_SEQ_LENGTH, tokenizer)
 
     return [

@@ -3,7 +3,7 @@ import requests
 
 
 PREDICT_URL = "http://34.65.73.45:8010/predict"
-BATCH_SIZE = 200
+BATCH_SIZE = 8
 
 
 def batch(iterable, n=1):

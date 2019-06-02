@@ -5,8 +5,7 @@ import tensorflow as tf
 
 from .bert import modeling, optimization
 from .constants import (
-    BERT_PRETRAINED_DIR, OUTPUT_DIR, LEARNING_RATE, TRAIN_BATCH_SIZE, NUM_TRAIN_EPOCHS,
-    WARMUP_PROPORTION,
+    BERT_PRETRAINED_DIR, LEARNING_RATE, WARMUP_PROPORTION,
     BERT_INIT_CHECKPOINT)
 from .model import create_model
 

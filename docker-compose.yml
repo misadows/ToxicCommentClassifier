@@ -1,0 +1,19 @@
+version: '2'
+
+services:
+  model:
+    image: tensorflow/serving
+    environment:
+      - MODEL_NAME=saved_model_basic
+    volumes:
+      - ./saved_model_basic:/models/saved_model_basic
+    ports:
+      - 8501:8501
+
+  proxy:
+    build:
+      context: .
+      dockerfile: proxy.docker
+    container_name: proxy
+    ports:
+      - 8010:8010

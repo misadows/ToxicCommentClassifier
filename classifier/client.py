@@ -22,6 +22,6 @@ data = {
     ]
 }
 
-url = 'http://localhost:8501/v1/models/saved_model_basic:predict'
+url = 'http://34.65.73.45:8501/v1/models/saved_model_basic:predict'
 r = requests.post(url, data=json.dumps(data))
 print(r.text)

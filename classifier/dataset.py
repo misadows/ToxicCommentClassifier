@@ -137,7 +137,7 @@ def serving_input_receiver_fn():
         'input_ids': input_ids,
         'input_mask': input_mask,
         'segment_ids': segment_ids,
-        'label_ids': tf.zeros([None, len(ToxicCommentsProcessor().get_labels())], dtype=tf.int32)
+        'label_ids': tf.zeros([1, len(ToxicCommentsProcessor().get_labels())], dtype=tf.int32)
     }
 
     received_tensors = {
@@ -188,7 +188,10 @@ def input_fn_builder(features, seq_length, is_training, drop_remainder):
                     shape=[num_examples, seq_length],
                     dtype=tf.int32),
             "label_ids":
-                tf.constant(all_label_ids, shape=[num_examples, len(label_list)], dtype=tf.int32),
+                tf.constant(
+                    all_label_ids,
+                    shape=[num_examples, len(ToxicCommentsProcessor().get_labels())],
+                    dtype=tf.int32),
         })
 
         if is_training:

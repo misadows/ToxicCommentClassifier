@@ -1,7 +1,7 @@
 Flask==1.0.3
 gunicorn==19.9.0
 requests==2.21.0
-tensorflow==1.13.1
+tensorflow==2.6.4
 tensorflow-estimator==1.13.0
 tensorflow-hub==0.4.0
 pandas==0.23.4
